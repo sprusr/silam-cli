@@ -1,5 +1,8 @@
-use chrono::{DateTime, Days, SecondsFormat, Timelike, Utc};
+use chrono::{DateTime, SecondsFormat, Utc};
 use serde::Deserialize;
+use thredds_catalog::ThreddsCatalog;
+
+mod thredds_catalog;
 
 #[derive(Debug, Deserialize)]
 enum PollenIndex {
@@ -48,19 +51,18 @@ struct PollenForecast {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let catalog = ThreddsCatalog::get().await?;
+
     let latitude = std::env::args().nth(1).expect("no latitude given");
     let longitude = std::env::args().nth(2).expect("no longitude given");
 
     let url = format!(
-        "https://silam.fmi.fi/thredds/ncss/silam_europe_pollen_v5_9/runs/{run_name}?var=POLI&var=POLISRC&latitude={latitude}&longitude={longitude}&time_start={time_start}&time_end={time_end}&vertCoord=12.5&accept=csv",
+        "https://silam.fmi.fi/thredds/ncss/{url_path}?var=POLI&var=POLISRC&latitude={latitude}&longitude={longitude}&time_start={time_start}&time_end={time_end}&vertCoord=12.5&accept=csv",
         latitude = latitude,
         longitude = longitude,
-        run_name = format!(
-            "silam_europe_pollen_v5_9_RUN_{timestamp}",
-            timestamp = Utc::now().with_hour(0).unwrap().with_minute(0).unwrap().with_second(0).unwrap().to_rfc3339_opts(SecondsFormat::Secs, true),
-        ),
-        time_start = Utc::now().with_hour(1).unwrap().with_minute(0).unwrap().with_second(0).unwrap().to_rfc3339_opts(SecondsFormat::Secs, true),
-        time_end = Utc::now().with_hour(0).unwrap().with_minute(0).unwrap().with_second(0).unwrap().checked_add_days(Days::new(5)).unwrap().to_rfc3339_opts(SecondsFormat::Secs, true),
+        url_path = catalog.get_latest_url(),
+        time_start = catalog.get_latest_start().to_rfc3339_opts(SecondsFormat::Secs, true),
+        time_end = catalog.get_latest_end().to_rfc3339_opts(SecondsFormat::Secs, true),
     );
 
     let res = reqwest::get(&url).await?;
