@@ -20,7 +20,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )
     .await?;
 
-    println!("{:?}", forecast);
+    let json = serde_json::to_string(&forecast)?;
+
+    println!("{}", json);
 
     Ok(())
 }

@@ -1,7 +1,7 @@
 use chrono::{DateTime, SecondsFormat, Utc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 enum PollenIndex {
     #[serde(rename(deserialize = "1.0"))]
     VeryLow,
@@ -15,7 +15,7 @@ enum PollenIndex {
     VeryHigh,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 enum PollenType {
     #[serde(rename(deserialize = "-1.0"))]
     Unknown,
@@ -33,17 +33,17 @@ enum PollenType {
     Ragweed,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PollenForecast {
     time: DateTime<Utc>,
-    #[serde(rename = "latitude[unit=\"degrees_north\"]")]
+    #[serde(rename(deserialize = "latitude[unit=\"degrees_north\"]"))]
     latitude: f32,
-    #[serde(rename = "longitude[unit=\"degrees_east\"]")]
+    #[serde(rename(deserialize = "longitude[unit=\"degrees_east\"]"))]
     longitude: f32,
-    #[serde(rename = "POLI[unit=\"\"]")]
-    poli: PollenIndex,
-    #[serde(rename = "POLISRC[unit=\"\"]")]
-    polisrc: PollenType,
+    #[serde(rename(deserialize = "POLI[unit=\"\"]"))]
+    index: PollenIndex,
+    #[serde(rename(deserialize = "POLISRC[unit=\"\"]"))]
+    source: PollenType,
 }
 
 impl PollenForecast {
@@ -53,7 +53,7 @@ impl PollenForecast {
         longitude: &str,
         time_start: &DateTime<Utc>,
         time_end: &DateTime<Utc>,
-    ) -> Result<(Vec<PollenForecast>), Box<dyn std::error::Error>> {
+    ) -> Result<Vec<PollenForecast>, Box<dyn std::error::Error>> {
         let url = format!(
             "https://silam.fmi.fi/thredds/ncss/{url_path}?var=POLI&var=POLISRC&latitude={latitude}&longitude={longitude}&time_start={time_start}&time_end={time_end}&vertCoord=12.5&accept=csv",
             latitude = latitude,

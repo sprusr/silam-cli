@@ -30,7 +30,7 @@ struct TimeCoverage {
 }
 
 impl ThreddsCatalog {
-    pub async fn get() -> Result<(ThreddsCatalog), Box<dyn std::error::Error>> {
+    pub async fn get() -> Result<ThreddsCatalog, Box<dyn std::error::Error>> {
         let res = reqwest::get(SILAM_EUROPE_POLLEN_CATALOG).await?;
         let body = res.text().await?;
         let catalog: ThreddsCatalog = from_str(&body).unwrap();
